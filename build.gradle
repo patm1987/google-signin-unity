@@ -37,6 +37,22 @@ allprojects {
     }
 }
 
+def latestUnityInstall(editorPath) {
+    def editorDir = new File(editorPath)
+    if (!editorDir.exists() || !editorDir.isDirectory()) {
+        println "Error: invalid path: $editorDir"
+        return null
+    }
+
+    def highestVersion = null
+    editorDir.eachDir { dir ->
+        if (highestVersion == null || dir.name > highestVersion) {
+            highestVersion = dir.name
+        }
+    }
+    return highestVersion
+}
+
 project.ext {
     // Determine the current OS.
     os_name = System.getProperty("os.name").toLowerCase();
@@ -50,7 +66,8 @@ project.ext {
     }
     if (unity_exe == null || unity_exe.isEmpty()) {
         if (os_osx) {
-            unity_exe = '/Applications/Unity/Unity.app/Contents/MacOS/Unity'
+            editorPath = '/Applications/Unity/Hub/Editor/'
+            unity_exe = "/Applications/Unity/Hub/Editor/${latestUnityInstall(editorPath)}/Unity.app/Contents/MacOS/Unity"
         } else if (os_windows) {
             unity_exe = 'c:\\program files\\unity\\editor\\unity.exe'
         } else {
@@ -152,7 +169,7 @@ task import_jarresolver() {
 
     doLast {
         def tree = fileTree(resolverDir) {
-            include "*.unitypackage"
+            include "*latest.unitypackage"
         }
         def jarresolver_package = tree.getSingleFile()
         def argv = [
